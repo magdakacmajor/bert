@@ -738,9 +738,9 @@ RawResult = collections.namedtuple("RawResult",
                                    ["unique_id", "start_logits", "end_logits"])
 
 
-def write_predictions(all_examples, all_features, all_results, n_best_size,
+def get_predictions(all_examples, all_features, all_results, n_best_size,
                       max_answer_length, do_lower_case, output_prediction_file,
-                      output_nbest_file, output_null_log_odds_file):
+                      output_nbest_file, output_null_log_odds_file, save_output=False):
   """Write final predictions to the json file and log-odds of null if needed."""
   tf.logging.info("Writing predictions to: %s" % (output_prediction_file))
   tf.logging.info("Writing nbest to: %s" % (output_nbest_file))
@@ -913,15 +913,18 @@ def write_predictions(all_examples, all_features, all_results, n_best_size,
 
     all_nbest_json[example.qas_id] = nbest_json
 
-  with tf.gfile.GFile(output_prediction_file, "w") as writer:
-    writer.write(json.dumps(all_predictions, indent=4) + "\n")
-
-  with tf.gfile.GFile(output_nbest_file, "w") as writer:
-    writer.write(json.dumps(all_nbest_json, indent=4) + "\n")
-
-  if FLAGS.version_2_with_negative:
-    with tf.gfile.GFile(output_null_log_odds_file, "w") as writer:
-      writer.write(json.dumps(scores_diff_json, indent=4) + "\n")
+    if save_output:
+        with tf.gfile.GFile(output_prediction_file, "w") as writer:
+          writer.write(json.dumps(all_predictions, indent=4) + "\n")
+         
+        with tf.gfile.GFile(output_nbest_file, "w") as writer:
+          writer.write(json.dumps(all_nbest_json, indent=4) + "\n")
+         
+        if FLAGS.version_2_with_negative:
+          with tf.gfile.GFile(output_null_log_odds_file, "w") as writer:
+              writer.write(json.dumps(scores_diff_json, indent=4) + "\n")
+    
+    return all_nbest_json
 
 
 def get_final_text(pred_text, orig_text, do_lower_case):
